@@ -2,6 +2,7 @@
 {
     public enum ActionType
     {
-        Harvest
+        Harvest,
+        Carry
     }
 }

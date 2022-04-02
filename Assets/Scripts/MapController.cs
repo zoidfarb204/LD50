@@ -45,6 +45,7 @@ public class MapController : MonoBehaviour
                 if (x == 4 && y == 2)
                 {
                     tile = hub;
+                    hubWorldLocation = grid.CellToWorld(p);
                 }
                 map.SetTile(p,tile);
             }

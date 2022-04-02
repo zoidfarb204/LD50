@@ -15,9 +15,10 @@ public class Gatherer : MonoBehaviour
     private MapController _mapObject;
     
     //Gatherer Stats
-    public int Carry { get; set; }
-    public int GatherSpeed { get; set; }
-    public int GatherLeft { get; set; }
+    public float Carry;
+    public float GatherSpeed;
+
+    public float Carrying;
     
     // Start is called before the first frame update
     void Start()
@@ -26,6 +27,7 @@ public class Gatherer : MonoBehaviour
         _mapObject =  GameObject.Find("MapController").GetComponent<MapController>();
         Carry = 1;
         GatherSpeed = 2;
+        Carrying = 0;
      
         if (_mapObject != null)
         {
@@ -40,9 +42,10 @@ public class Gatherer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        float step = Time.deltaTime;
+
         if (moving)
         {
-            float step = Time.deltaTime;
             transform.position = Vector3.MoveTowards(transform.position, _currentAction.Destination, step);
             if (Vector3.Distance(transform.position, _currentAction.Destination) < 0.001f)
             {
@@ -52,7 +55,22 @@ public class Gatherer : MonoBehaviour
             
         }else if (harvesting)
         {
-            _mapObject.Resources.FirstOrDefault().Gather(this);
+            this.Carrying = this.Carrying + _mapObject.Resources.FirstOrDefault().Gather(this.GatherSpeed, step);
+            if (this.Carrying >= this.Carry)
+            {
+                //return extra
+                var extra = this.Carrying - this.Carry;
+                _mapObject.Resources.FirstOrDefault().AdjustAmount(extra);
+                this.Carrying = this.Carry;
+                //move to hub;
+                
+                ActionQueue.Enqueue(new Action
+                {
+                    ActionType = ActionType.Carry,
+                    Destination = _mapObject.hubWorldLocation
+                });
+                this.harvesting = false;
+            }
         }
         else
         {
