@@ -7,8 +7,9 @@ using UnityEngine.Tilemaps;
 
 public class MapController : MonoBehaviour
 {
-    private GridLayout grid;
+    public GridLayout grid;
     public Tilemap map;
+    public BuildingController _buildingController;
     
     public List<IResource> Resources;
     public Vector3 hubWorldLocation;
@@ -20,7 +21,6 @@ public class MapController : MonoBehaviour
     void Start()
     {
         Resources = new List<IResource>();
-        grid = map.GetComponentInParent<GridLayout>();
         
         for (int x = 0; x < 10; x++)
         {
@@ -41,21 +41,30 @@ public class MapController : MonoBehaviour
                         TilePosition =  p
                     });
                 }
-
-                if (x == 4 && y == 2)
-                {
-                    tile = hub;
-                    hubWorldLocation = grid.CellToWorld(p);
-                }
                 map.SetTile(p,tile);
             }
         }
+        
+        _buildingController.InitBuildings();
     }
 
     // Update is called once per frame
     void Update()
     {
         
+    }
+
+    public Vector3? PlaceBuilding(BuildingType type, Vector3Int location)
+    {
+        switch (type)
+        {
+            case BuildingType.Hub:
+                map.SetTile(location,null);
+                map.SetTile(location,hub);
+                return grid.CellToWorld(location);
+            default:
+                return null;
+        }
     }
 }
 
