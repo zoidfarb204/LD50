@@ -7,18 +7,20 @@ using UnityEngine.Tilemaps;
 
 public class MapController : MonoBehaviour
 {
+    private GridLayout grid;
     public Tilemap map;
     
     public List<IResource> Resources;
-
+    public Vector3 hubWorldLocation;
     public Tile rock;
     public Tile forrest;
+    public Tile hub;
 
     // Start is called before the first frame update
     void Start()
     {
         Resources = new List<IResource>();
-        
+        grid = map.GetComponentInParent<GridLayout>();
         
         for (int x = 0; x < 10; x++)
         {
@@ -35,8 +37,14 @@ public class MapController : MonoBehaviour
                     {
                         Amount = 200,
                         Tile = tile,
-                        Location = p
+                        WorldPosition = grid.CellToWorld(p),
+                        TilePosition =  p
                     });
+                }
+
+                if (x == 4 && y == 2)
+                {
+                    tile = hub;
                 }
                 map.SetTile(p,tile);
             }

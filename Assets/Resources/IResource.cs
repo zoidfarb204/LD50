@@ -8,8 +8,10 @@ namespace Resources
     {
         string Name { get; }
         TileBase Tile { get; set; }
-         int Amount { get; set; }
+        int Amount { get; set; }
         ResourceType Type { get; }
-        Vector3Int Location { get; set; }
+        Vector3Int TilePosition { get; set; }
+        Vector3 WorldPosition { get; set; }
+        void Gather(Gatherer gatherer);
     }
 }

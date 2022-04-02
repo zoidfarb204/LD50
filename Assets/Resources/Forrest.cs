@@ -10,6 +10,11 @@ namespace Resources
         public TileBase Tile { get; set; }
         public int Amount { get; set; }
         public ResourceType Type => ResourceType.Wood;
-        public Vector3Int Location { get; set; }
+        public Vector3Int TilePosition { get; set; }
+        public Vector3 WorldPosition { get; set; }
+        public void Gather(Gatherer gatherer)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
