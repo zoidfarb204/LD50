@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Inventory;
 using UnityEngine;
 
 public class BuildingController : MonoBehaviour
@@ -29,7 +30,12 @@ public class BuildingController : MonoBehaviour
             Buildings.Add(new Hub
             {
                 TileLocation = hubLocation,
-                WorldLocation = worldLocation.Value
+                WorldLocation = worldLocation.Value,
+                Inventory = new Inventory.Inventory
+                {
+                    NumSlots = 10,
+                    Slots = new List<ISlot>()
+                }
             });
         }
     }
@@ -40,6 +46,7 @@ public class Hub : IBuilding
     public BuildingType Type => BuildingType.Hub;
     public Vector3Int TileLocation { get; set; }
     public Vector3 WorldLocation { get; set; }
+    public IInventory Inventory { get; set; }
 }
 
 public interface IBuilding
@@ -47,6 +54,7 @@ public interface IBuilding
     public BuildingType Type { get; }
     public Vector3Int TileLocation { get; set; }
     public Vector3 WorldLocation { get; set; }
+    public IInventory Inventory { get; set; }
 }
 
 public enum BuildingType

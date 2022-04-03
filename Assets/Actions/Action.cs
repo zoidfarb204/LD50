@@ -7,5 +7,6 @@ namespace Actions
     {
         public ActionType ActionType { get; set; }
         public Vector3 Destination { get; set; }
+        public IBuilding Building { get; set; }
     }
 }

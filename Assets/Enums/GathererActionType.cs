@@ -1,8 +1,9 @@
 ﻿namespace Enums
 {
-    public enum ActionType
+    public enum GathererActionType
     {
         Harvest,
+        Move,
         Put
     }
 }

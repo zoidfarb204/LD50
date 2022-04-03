@@ -3,38 +3,39 @@ using System.Collections.Generic;
 using System.Linq;
 using Actions;
 using Enums;
+using Inventory;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using UnityEngine.Tilemaps;
 
 public class Gatherer : MonoBehaviour
 {
-    private bool moving;
-    private bool harvesting;
     private Action _currentAction;
     private Queue<Action> ActionQueue { get; set; }
     private MapController _mapObject;
+    private BuildingController _buildingController;
     
     //Gatherer Stats
     public float Carry;
     public float GatherSpeed;
-
-    public float Carrying;
+    public Inventory.Inventory GathererInventory { get; set; }
+    public ResourceType Type { get; set; }
     
     // Start is called before the first frame update
     void Start()
     {
         ActionQueue = new Queue<Action>();
         _mapObject =  GameObject.Find("MapController").GetComponent<MapController>();
+        _buildingController = GameObject.Find("BuildingController").GetComponent<BuildingController>();
         Carry = 1;
         GatherSpeed = 2;
-        Carrying = 0;
      
         if (_mapObject != null)
         {
             ActionQueue.Enqueue(new Action
             {
                 ActionType = ActionType.Harvest,
-                Destination = _mapObject.Resources.FirstOrDefault().WorldPosition
+                Destination = _mapObject.Resources.FirstOrDefault(x=> x.Type == Type).WorldPosition
             });
         }
     }
@@ -43,44 +44,93 @@ public class Gatherer : MonoBehaviour
     void Update()
     {
         float step = Time.deltaTime;
+        float distanceToDestination = 0;
+        if (_currentAction != null)
+        {
+            distanceToDestination = Vector3.Distance(transform.position, _currentAction.Destination);
+        }
 
-        if (moving)
+        switch (_currentAction?.ActionType)
         {
-            transform.position = Vector3.MoveTowards(transform.position, _currentAction.Destination, step);
-            if (Vector3.Distance(transform.position, _currentAction.Destination) < 0.001f)
-            {
-                moving = false;
-                harvesting = true;
-            }
-            
-        }else if (harvesting)
+            case ActionType.Harvest:
+                Harvest(distanceToDestination, step);
+                break;
+            case ActionType.Put:
+                Put(distanceToDestination, step);
+                break;
+            default:
+                DequeueTask();
+                break;
+        }
+    }
+
+    private void DequeueTask()
+    {
+        Debug.Log("Dequeueing task");
+        if (ActionQueue.Count == 0)
         {
-            this.Carrying = this.Carrying + _mapObject.Resources.FirstOrDefault().Gather(this.GatherSpeed, step);
-            if (this.Carrying >= this.Carry)
-            {
-                //return extra
-                var extra = this.Carrying - this.Carry;
-                _mapObject.Resources.FirstOrDefault().AdjustAmount(extra);
-                this.Carrying = this.Carry;
-                //move to hub;
-                
-                ActionQueue.Enqueue(new Action
-                {
-                    ActionType = ActionType.Carry,
-                    Destination = _mapObject.hubWorldLocation
-                });
-                this.harvesting = false;
-            }
+            Debug.Log("No Task");
+            return;
+        }
+        _currentAction = ActionQueue.Dequeue();
+    }
+
+    private void Put(float distanceToDestination, float step)
+    {
+        if (distanceToDestination > .001f)
+        {
+            Move(step);
         }
         else
         {
-            Debug.Log("Dequeueing task");
-            _currentAction = ActionQueue.Dequeue();
-            if (Vector3.Distance(transform.position, _currentAction.Destination) > 0.001f)
+            var buildingSlot = _currentAction.Building.Inventory.GetSlot(Type);
+            var gatherSlot = GathererInventory.GetSlot(Type);
+            Inventory.Inventory.TransferInventory(buildingSlot, gatherSlot, step);
+            if (gatherSlot.Amount <= 0)
             {
-                moving = true;
+                //Go Harvest More
+                _currentAction = null;
+                ActionQueue.Enqueue(new Action
+                {
+                    ActionType = ActionType.Harvest,
+                    Destination = _mapObject.Resources.FirstOrDefault(x=> x.Type == Type).WorldPosition
+                });
             }
         }
-        
+    }
+
+    private void Harvest(float distanceToDestination, float step)
+    {
+        if (distanceToDestination > .001f)
+        {
+            Move(step);
+        }
+        else
+        {
+            var slot = GathererInventory.GetSlot(Type);
+            slot.Amount += _mapObject.Resources.FirstOrDefault(x=> x.Type == Type).Gather(this.GatherSpeed, step);
+            if (slot.Amount >= this.Carry)
+            {
+                //return extra to resource node
+                var extra = slot.Amount - this.Carry;
+                _mapObject.Resources.FirstOrDefault().AdjustAmount(extra);
+                slot.Amount = this.Carry;
+               
+                //move to hub;
+                var building = _buildingController.Buildings.FirstOrDefault(x => x.Type == BuildingType.Hub);
+                ActionQueue.Enqueue(new Action
+                {
+                    ActionType = ActionType.Put,
+                    Destination = building.WorldLocation,
+                    Building =building
+                });
+                _currentAction = null;
+            }
+        }
+    }
+
+    private void Move(float step)
+    {
+        transform.position = Vector3.MoveTowards(transform.position, _currentAction.Destination, step);
     }
 }
