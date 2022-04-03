@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Buildings;
+using Enums;
 using Inventory;
+using Resources;
 using UnityEngine;
 
 public class BuildingController : MonoBehaviour
@@ -38,26 +41,30 @@ public class BuildingController : MonoBehaviour
                 }
             });
         }
+
+        var forrestLocation = new Vector3Int(3, 7, 0);
+        var forrestWorldLocation = _mapObject.PlaceBuilding(BuildingType.Forrest, forrestLocation);
+        if (forrestWorldLocation != null)
+        {
+            var forrest = new Forrest
+            {
+                TileLocation = forrestLocation,
+                WorldLocation = forrestWorldLocation.Value,
+                Inventory = new Inventory.Inventory
+                {
+                    NumSlots = 1,
+                    Slots = new List<ISlot>()
+                }
+            };
+            var wood = forrest.Inventory.GetSlot(ResourceType.Wood);
+            wood.Amount = 1000;
+            Buildings.Add(forrest);
+        } 
+      
     }
 }
 
-public class Hub : IBuilding
-{
-    public BuildingType Type => BuildingType.Hub;
-    public Vector3Int TileLocation { get; set; }
-    public Vector3 WorldLocation { get; set; }
-    public IInventory Inventory { get; set; }
-}
 
-public interface IBuilding
-{
-    public BuildingType Type { get; }
-    public Vector3Int TileLocation { get; set; }
-    public Vector3 WorldLocation { get; set; }
-    public IInventory Inventory { get; set; }
-}
 
-public enum BuildingType
-{
-    Hub
-}
+
+

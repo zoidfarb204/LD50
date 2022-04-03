@@ -4,6 +4,7 @@ using System.Linq;
 using Actions;
 using Enums;
 using Inventory;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using UnityEngine.Tilemaps;
@@ -32,10 +33,12 @@ public class Gatherer : MonoBehaviour
      
         if (_mapObject != null)
         {
+            var building = _buildingController.Buildings.FirstOrDefault(x => x.Type == BuildingType.Forrest); // assuming wood here should change with more resources
             ActionQueue.Enqueue(new Action
             {
                 ActionType = ActionType.Harvest,
-                Destination = _mapObject.Resources.FirstOrDefault(x=> x.Type == Type).WorldPosition
+                Destination = building.WorldLocation,
+                Building = building
             });
         }
     }
@@ -90,10 +93,12 @@ public class Gatherer : MonoBehaviour
             {
                 //Go Harvest More
                 _currentAction = null;
+                var building = _buildingController.Buildings.FirstOrDefault(x => x.Type == BuildingType.Forrest); // assuming wood here should change with more resources
                 ActionQueue.Enqueue(new Action
                 {
                     ActionType = ActionType.Harvest,
-                    Destination = _mapObject.Resources.FirstOrDefault(x=> x.Type == Type).WorldPosition
+                    Destination = building.WorldLocation,
+                    Building = building
                 });
             }
         }
@@ -107,15 +112,14 @@ public class Gatherer : MonoBehaviour
         }
         else
         {
-            var slot = GathererInventory.GetSlot(Type);
-            slot.Amount += _mapObject.Resources.FirstOrDefault(x=> x.Type == Type).Gather(this.GatherSpeed, step);
-            if (slot.Amount >= this.Carry)
+            var buildingSlot = _currentAction.Building.Inventory.GetSlot(Type);
+            var gatherSlot = GathererInventory.GetSlot(Type);
+            Inventory.Inventory.TransferInventory(gatherSlot, buildingSlot, step);
+            if (gatherSlot.Amount >= this.Carry)
             {
-                //return extra to resource node
-                var extra = slot.Amount - this.Carry;
-                _mapObject.Resources.FirstOrDefault().AdjustAmount(extra);
-                slot.Amount = this.Carry;
-               
+                //Return extra
+                Inventory.Inventory.TransferInventory(buildingSlot, gatherSlot, gatherSlot.Amount - this.Carry);
+                
                 //move to hub;
                 var building = _buildingController.Buildings.FirstOrDefault(x => x.Type == BuildingType.Hub);
                 ActionQueue.Enqueue(new Action
