@@ -1,15 +1,20 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Buildings;
 using Enums;
 using Inventory;
 using Resources;
+using TMPro;
 using UnityEngine;
 
 public class BuildingController : MonoBehaviour
 {
     private MapController _mapObject;
 
+    
+    public TextMeshProUGUI woodText;
     // Start is called before the first frame update
     public List<IBuilding> Buildings { get; set; }
     void Start()
@@ -21,7 +26,9 @@ public class BuildingController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        var woodSlot = Buildings.FirstOrDefault(x=> x.Type == BuildingType.Hub).Inventory.GetSlot(ResourceType.Wood);
+        var woodAmount = (int) Math.Round(woodSlot.Amount);
+        woodText.text = "Wood - " + woodAmount;
     }
 
     public void InitBuildings()
